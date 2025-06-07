@@ -1,5 +1,6 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import AnimatedIntro from '../components/AnimatedIntro';
 import StickyHeader from '../components/StickyHeader';
 import Hero from '../components/Hero';
 import Skills from '../components/Skills';
@@ -9,6 +10,8 @@ import Education from '../components/Education';
 import Contact from '../components/Contact';
 
 const Index = () => {
+  const [showIntro, setShowIntro] = useState(true);
+
   useEffect(() => {
     // Add smooth scrolling behavior
     document.documentElement.style.scrollBehavior = 'smooth';
@@ -18,6 +21,14 @@ const Index = () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
   }, []);
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+  };
+
+  if (showIntro) {
+    return <AnimatedIntro onComplete={handleIntroComplete} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 scroll-smooth">
