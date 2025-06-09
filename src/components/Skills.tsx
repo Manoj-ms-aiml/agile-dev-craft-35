@@ -1,9 +1,14 @@
+import React, { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import anime from 'animejs';
 
-import React from 'react';
-import { useScrollAnimation } from '../hooks/useScrollAnimation';
+gsap.registerPlugin(ScrollTrigger);
 
 const Skills = () => {
-  const [ref, isVisible] = useScrollAnimation(0.2);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement[]>([]);
 
   const skillCategories = [
     {
@@ -44,19 +49,121 @@ const Skills = () => {
     }
   ];
 
+  useEffect(() => {
+    // Title animation
+    gsap.fromTo(titleRef.current, 
+      { 
+        opacity: 0, 
+        y: 50,
+        scale: 0.8
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 1,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: titleRef.current,
+          start: "top 80%",
+          end: "bottom 20%",
+          toggleActions: "play none none reverse"
+        }
+      }
+    );
+
+    // Cards animation
+    cardsRef.current.forEach((card, index) => {
+      if (card) {
+        // Set initial state
+        gsap.set(card, {
+          opacity: 0,
+          y: 100,
+          rotationY: -15,
+          transformOrigin: "center center"
+        });
+
+        // Animate on scroll
+        gsap.to(card, {
+          opacity: 1,
+          y: 0,
+          rotationY: 0,
+          duration: 0.8,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: card,
+            start: "top 85%",
+            end: "bottom 15%",
+            toggleActions: "play none none reverse"
+          },
+          delay: index * 0.1
+        });
+
+        // Hover animations with GSAP
+        const handleMouseEnter = () => {
+          gsap.to(card, {
+            scale: 1.05,
+            rotationY: 5,
+            z: 50,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+
+          // Animate skill tags with Anime.js
+          const skillTags = card.querySelectorAll('.skill-tag');
+          anime({
+            targets: skillTags,
+            scale: [1, 1.1, 1],
+            duration: 600,
+            delay: anime.stagger(50),
+            easing: 'easeOutElastic(1, .6)'
+          });
+        };
+
+        const handleMouseLeave = () => {
+          gsap.to(card, {
+            scale: 1,
+            rotationY: 0,
+            z: 0,
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        };
+
+        card.addEventListener('mouseenter', handleMouseEnter);
+        card.addEventListener('mouseleave', handleMouseLeave);
+
+        // Cleanup
+        return () => {
+          card.removeEventListener('mouseenter', handleMouseEnter);
+          card.removeEventListener('mouseleave', handleMouseLeave);
+        };
+      }
+    });
+
+    // Floating animation for icons
+    const icons = sectionRef.current?.querySelectorAll('.skill-icon');
+    icons?.forEach((icon, index) => {
+      gsap.to(icon, {
+        y: -10,
+        duration: 2 + (index * 0.2),
+        repeat: -1,
+        yoyo: true,
+        ease: "power2.inOut",
+        delay: index * 0.3
+      });
+    });
+
+  }, []);
+
   return (
-    <section id="skills" className="py-24 bg-gradient-to-b from-slate-900 to-slate-950 relative overflow-hidden">
+    <section ref={sectionRef} id="skills" className="py-24 bg-gradient-to-b from-slate-900 to-slate-950 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%)]"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(147,51,234,0.1),transparent_50%)]"></div>
       
       <div className="container mx-auto px-6 relative z-10">
-        <div 
-          ref={ref}
-          className={`text-center mb-20 transition-all duration-1000 ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}
-        >
+        <div ref={titleRef} className="text-center mb-20">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Technical <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Expertise</span>
           </h2>
@@ -69,18 +176,12 @@ const Skills = () => {
           {skillCategories.map((category, index) => (
             <div 
               key={index} 
-              className={`group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50 hover:border-slate-600/50 transition-all duration-700 hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/10 ${
-                isVisible 
-                  ? 'opacity-100 translate-y-0' 
-                  : 'opacity-0 translate-y-10'
-              }`}
-              style={{ 
-                transitionDelay: isVisible ? `${index * 150}ms` : '0ms' 
-              }}
+              ref={el => el && (cardsRef.current[index] = el)}
+              className="group bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50 hover:border-slate-600/50 transition-all duration-700 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer"
             >
               {/* Icon and gradient background */}
               <div className="relative mb-6">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${category.color} flex items-center justify-center mb-4 transform group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`skill-icon w-16 h-16 rounded-2xl bg-gradient-to-r ${category.color} flex items-center justify-center mb-4 transform group-hover:scale-110 transition-transform duration-300`}>
                   <span className="text-2xl">{category.icon}</span>
                 </div>
                 <div className={`absolute inset-0 w-16 h-16 rounded-2xl bg-gradient-to-r ${category.color} opacity-20 blur-xl transform group-hover:scale-150 transition-transform duration-300`}></div>
@@ -94,12 +195,7 @@ const Skills = () => {
                 {category.skills.map((skill, skillIndex) => (
                   <div 
                     key={skillIndex} 
-                    className={`px-3 py-2 rounded-lg bg-slate-700/50 text-slate-300 text-sm border border-slate-600/30 hover:border-slate-500 transition-all duration-300 hover:transform hover:scale-105 ${
-                      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
-                    }`}
-                    style={{ 
-                      transitionDelay: isVisible ? `${(index * 150) + (skillIndex * 100)}ms` : '0ms'
-                    }}
+                    className="skill-tag px-3 py-2 rounded-lg bg-slate-700/50 text-slate-300 text-sm border border-slate-600/30 hover:border-slate-500 transition-all duration-300 hover:bg-slate-600/50"
                   >
                     {skill}
                   </div>
